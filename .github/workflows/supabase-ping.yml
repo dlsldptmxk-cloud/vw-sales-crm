@@ -1,0 +1,31 @@
+name: Supabase Keep-Alive Ping
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Send Ping to Supabase
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send HTTP Request
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/")
+          
+          echo "HTTP Response Code: $response"
+          
+          if [ "$response" -ge 200 ] && [ "$response" -lt 300 ]; then
+            echo "Successfully pinged Supabase!"
+            exit 0
+          else
+            echo "Failed to ping Supabase. Status: $response"
+            exit 1
+          fi
